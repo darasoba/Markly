@@ -1,5 +1,5 @@
 {
-  "name": "Paste as Markdown",
+  "name": "Paste from Markdown",
   "id": "1491236431880377267",
   "api": "1.0.0",
   "main": "code.js",
