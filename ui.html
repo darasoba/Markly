@@ -5,136 +5,167 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown to Layers</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            padding: 1rem; /* 16px */
-            background-color: #f8fafc; /* coolGray-50 */
+            padding: 1rem;
+            background-color: #f8fafc;
         }
-        /* Additional custom styles if needed */
         #preview {
-            border: 1px solid #e5e7eb; /* coolGray-200 */
-            padding: 0.75rem; /* 12px */
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
             min-height: 100px;
             background-color: white;
-            border-radius: 0.375rem; /* rounded-md */
+            border-radius: 0.375rem;
             overflow-y: auto;
-            max-height: 200px; /* Limit preview height */
+            max-height: 200px;
         }
-        /* Style the preview elements like Figma might render them */
-        #preview h1 { font-size: 1.875rem; /* text-3xl */ font-weight: bold; margin-bottom: 0.5rem; }
-        #preview h2 { font-size: 1.5rem; /* text-2xl */ font-weight: bold; margin-bottom: 0.5rem; }
-        #preview h3 { font-size: 1.25rem; /* text-xl */ font-weight: bold; margin-bottom: 0.5rem; }
+        #preview h1 { font-size: 1.875rem; font-weight: bold; margin-bottom: 0.5rem; }
+        #preview h2 { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; }
+        #preview h3 { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
         #preview p { margin-bottom: 0.75rem; line-height: 1.6; }
         #preview ul, #preview ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
         #preview li { margin-bottom: 0.25rem; }
-        #preview a { color: #2563eb; /* blue-600 */ text-decoration: underline; }
-
+        #preview a { color: #2563eb; text-decoration: underline; }
         label {
             display: block;
-            margin-bottom: 0.25rem; /* 4px */
-            font-weight: 500; /* medium */
-            color: #374151; /* coolGray-700 */
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            color: #374151;
         }
         select {
             width: 100%;
-            padding: 0.5rem; /* 8px */
-            border: 1px solid #d1d5db; /* coolGray-300 */
-            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
             background-color: white;
-            margin-bottom: 0.75rem; /* 12px */
+            margin-bottom: 0.75rem;
         }
         textarea {
             width: 100%;
-            padding: 0.5rem; /* 8px */
-            border: 1px solid #d1d5db; /* coolGray-300 */
-            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
             min-height: 150px;
-            margin-bottom: 1rem; /* 16px */
+            margin-bottom: 1rem;
         }
         button {
-            padding: 0.625rem 1.25rem; /* 10px 20px */
-            border-radius: 0.375rem; /* rounded-md */
-            font-weight: 600; /* semibold */
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
         #convert-button {
-            background-color: #2563eb; /* blue-600 */
+            background-color: #2563eb;
             color: white;
         }
         #convert-button:hover {
-            background-color: #1d4ed8; /* blue-700 */
+            background-color: #1d4ed8;
         }
         #cancel-button {
-            background-color: #e5e7eb; /* coolGray-200 */
-            color: #374151; /* coolGray-700 */
-            margin-left: 0.5rem; /* 8px */
+            background-color: #e5e7eb;
+            color: #374151;
+            margin-left: 0.5rem;
         }
         #cancel-button:hover {
-            background-color: #d1d5db; /* coolGray-300 */
+            background-color: #d1d5db;
         }
         .mapping-section {
             margin-bottom: 1rem;
             padding: 0.75rem;
-            background-color: #eef2ff; /* indigo-50 */
-            border-radius: 0.375rem; /* rounded-md */
+            background-color: #eef2ff;
+            border-radius: 0.375rem;
+        }
+        /* Spinner */
+        #loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loading-container, #error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #error-container {
+            color: #dc2626;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h2 class="text-lg font-semibold mb-3 text-gray-800">Convert Markdown to Layers</h2>
-
-    <div>
-        <label for="markdown-input" class="text-sm font-medium text-gray-700">Enter Markdown:</label>
-        <textarea id="markdown-input" placeholder="# Heading 1&#10;## Heading 2&#10;This is a paragraph with **bold** and *italic* text.&#10;- List item 1&#10;- List item 2&#10;[Example Link](https://example.com)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+    <!-- Spinner and loading message -->
+    <div id="loading-container">
+        <div id="loading-spinner"></div>
+        <div class="mt-4 text-gray-700 font-medium text-center">Connecting to plugin service...</div>
     </div>
-
-    <div>
-        <label class="text-sm font-medium text-gray-700">Preview:</label>
-        <div id="preview" class="mt-1 p-3 border border-gray-200 rounded-md bg-white min-h-[100px] max-h-[200px] overflow-y-auto text-sm"></div>
+    <!-- Error message -->
+    <div id="error-container" style="display:none;">
+        <div class="text-2xl mb-2">⚠️</div>
+        <div>Plugin service is currently unavailable.<br>Please check your internet connection or try again later.</div>
     </div>
-
-    <div id="style-mapping-container" class="mt-4 space-y-3 mapping-section">
-        <h3 class="text-md font-semibold mb-2 text-gray-700">Map to Figma Text Styles</h3>
-        <p class="text-xs text-gray-500 mb-3">Select which local text styles should be applied to each Markdown element. If no style is selected, default text settings will be used.</p>
-        <div id="style-mapping-options">
-             </div>
+    <!-- Main Content (hidden initially) -->
+    <div id="main-content" style="display:none;">
+        <h2 class="text-lg font-semibold mb-3 text-gray-800">Convert Markdown to Layers</h2>
+        <div>
+            <label for="markdown-input" class="text-sm font-medium text-gray-700">Enter Markdown:</label>
+            <textarea id="markdown-input" placeholder="# Heading 1&#10;## Heading 2&#10;This is a paragraph with **bold** and *italic* text.&#10;- List item 1&#10;- List item 2&#10;[Example Link](https://example.com)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-gray-700">Preview:</label>
+            <div id="preview" class="mt-1 p-3 border border-gray-200 rounded-md bg-white min-h-[100px] max-h-[200px] overflow-y-auto text-sm"></div>
+        </div>
+        <div id="style-mapping-container" class="mt-4 space-y-3 mapping-section">
+            <h3 class="text-md font-semibold mb-2 text-gray-700">Map to Figma Text Styles</h3>
+            <p class="text-xs text-gray-500 mb-3">Select which local text styles should be applied to each Markdown element. If no style is selected, default text settings will be used.</p>
+            <div id="style-mapping-options"></div>
+        </div>
+        <div class="mt-5 flex justify-end">
+            <button id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm font-medium">Cancel</button>
+            <button id="convert-button" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Convert</button>
+        </div>
     </div>
-
-    <div class="mt-5 flex justify-end">
-        <button id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm font-medium">Cancel</button>
-        <button id="convert-button" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Convert</button>
-    </div>
-
     <script>
+        // DOM Elements
         const markdownInput = document.getElementById('markdown-input');
         const preview = document.getElementById('preview');
         const convertButton = document.getElementById('convert-button');
         const cancelButton = document.getElementById('cancel-button');
         const styleMappingOptions = document.getElementById('style-mapping-options');
-
+        const loadingContainer = document.getElementById('loading-container');
+        const mainContent = document.getElementById('main-content');
+        const errorContainer = document.getElementById('error-container');
         let availableStyles = [];
         const markdownElements = [
             { key: 'h1', label: 'Heading 1 (#)', selector: 'h1' },
             { key: 'h2', label: 'Heading 2 (##)', selector: 'h2' },
             { key: 'h3', label: 'Heading 3 (###)', selector: 'h3' },
             { key: 'p', label: 'Paragraph', selector: 'p' },
-            { key: 'li', label: 'List Item (-, *)', selector: 'li' }
-            // Add more mappings here (e.g., h4, blockquote) if needed
+            { key: 'li', label: 'List Item (-, *)', selector: 'li' },
+            { key: 'strong', label: 'Bold (**text**)', selector: 'strong' },
+            { key: 'em', label: 'Italic (*text*)', selector: 'em' },
+            { key: 'a', label: 'Link [text](url)', selector: 'a' }
+            // Add more mappings here if needed (e.g., blockquote, code, etc.)
         ];
-
-        // --- Real-time Preview ---
+        // Real-time Preview
         function updatePreview() {
-            // Check if marked library is loaded
             if (typeof marked === 'undefined') {
                 preview.innerHTML = '<p style="color: red;">Error: Preview library (marked.js) not loaded. Check network access and CDN link.</p>';
                 return;
             }
             try {
                 const markdownText = markdownInput.value;
-                // Basic sanitization (more robust needed for production)
                 const sanitizedHtml = marked.parse(markdownText);
                 preview.innerHTML = sanitizedHtml;
             } catch (e) {
@@ -142,8 +173,7 @@
                 preview.innerHTML = '<p style="color: red;">Error rendering preview.</p>';
             }
         }
-
-        // Debounce function to limit preview updates
+        // Debounce
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -155,110 +185,93 @@
                 timeout = setTimeout(later, wait);
             };
         }
-
-        const debouncedUpdatePreview = debounce(updatePreview, 300); // Update preview 300ms after typing stops
-        markdownInput.addEventListener('input', debouncedUpdatePreview);
-
-        // --- Style Mapping UI ---
+        const debouncedUpdatePreview = debounce(updatePreview, 300);
+        // Style Mapping UI
         function populateStyleMappings(styles) {
-            availableStyles = styles; // Store styles globally in UI scope
-            styleMappingOptions.innerHTML = ''; // Clear existing options
-
+            availableStyles = styles;
+            styleMappingOptions.innerHTML = '';
             if (!styles || styles.length === 0) {
-                 styleMappingOptions.innerHTML = '<p class="text-xs text-gray-500">No local text styles found.</p>';
-                 return;
+                styleMappingOptions.innerHTML = '<p class="text-xs text-gray-500">No local text styles found.</p>';
+                return;
             }
-
             markdownElements.forEach(element => {
-                const container = document.createElement('div'); // Use a container for better spacing
-                container.className = 'mb-2'; // Add margin bottom
-
+                const container = document.createElement('div');
+                container.className = 'mb-2';
                 const label = document.createElement('label');
                 label.htmlFor = `map-${element.key}`;
                 label.textContent = element.label;
-                label.className = 'block text-sm font-medium text-gray-600 mb-1'; // Adjusted classes
-
+                label.className = 'block text-sm font-medium text-gray-600 mb-1';
                 const select = document.createElement('select');
                 select.id = `map-${element.key}`;
-                // Removed w-full to let it size naturally or control with parent
                 select.className = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm';
-
-
-                // Add default option
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = 'Default (No Style)';
                 select.appendChild(defaultOption);
-
-                // Add options from Figma styles
                 styles.forEach(style => {
                     const option = document.createElement('option');
-                    option.value = style.id; // Use style ID as value
+                    option.value = style.id;
                     option.textContent = style.name;
                     select.appendChild(option);
                 });
-
-                container.appendChild(label); // Append label to container
-                container.appendChild(select); // Append select to container
-                styleMappingOptions.appendChild(container); // Append container to main options div
+                container.appendChild(label);
+                container.appendChild(select);
+                styleMappingOptions.appendChild(container);
             });
         }
-
-        // --- Communication with Plugin Code ---
+        // Communication with Plugin Code
         window.onmessage = (event) => {
             if (event.data.pluginMessage) {
                 const { type, data } = event.data.pluginMessage;
-                 console.log("Message received from Figma code:", type, data); // Log messages from plugin code
                 if (type === 'stylesLoaded') {
                     populateStyleMappings(data);
-                }
-                 if (type === 'conversionError') {
-                    // Display error in a more user-friendly way if possible
+                } else if (type === 'conversionError') {
                     alert(`Error during conversion: ${data.message}`);
                     console.error('Conversion Error from Figma:', data.message);
-                    // Optional: Display error message somewhere persistent in the UI
-                 }
-                 if (type === 'stylesError') {
-                    console.error("Error loading styles from Figma:", data.message);
-                     styleMappingOptions.innerHTML = `<p class="text-xs text-red-600">Error: ${data.message}</p>`;
-                 }
+                } else if (type === 'stylesError') {
+                    styleMappingOptions.innerHTML = `<p class="text-xs text-red-600">Error loading styles: ${data.message}</p>`;
+                }
             }
         };
-
-        // --- Initialization ---
-        // Try initial preview render slightly delayed to allow marked.js to potentially load
-        setTimeout(updatePreview, 100);
-         // Request styles when the UI loads
-        parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
-
-
-        // --- Button Actions ---
+        // Button Actions
         convertButton.onclick = () => {
-             console.log('Convert button clicked'); // Debug log
             try {
                 const markdown = markdownInput.value;
                 const mappings = {};
                 markdownElements.forEach(element => {
                     const select = document.getElementById(`map-${element.key}`);
-                    // Ensure select exists before trying to access its value
                     if (select && select.value) {
-                        mappings[element.key] = select.value; // Map element key (h1, p) to selected style ID
+                        mappings[element.key] = select.value;
                     }
                 });
-
-                 console.log('Sending to Figma:', { type: 'convertMarkdown', data: { markdown, mappings } }); // Debug log
                 parent.postMessage({ pluginMessage: { type: 'convertMarkdown', data: { markdown, mappings } } }, '*');
             } catch (e) {
-                 console.error("Error in convert button click handler:", e);
-                 alert("An unexpected error occurred in the UI. Check the console (Right-click -> Inspect -> Console).");
+                alert("An unexpected error occurred in the UI. Check the console.");
             }
         };
-
         cancelButton.onclick = () => {
-             console.log('Cancel button clicked'); // Debug log
             parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
         };
-
+        // Dynamic Script Loading for marked.js
+        function showMainContent() {
+            loadingContainer.style.display = 'none';
+            errorContainer.style.display = 'none';
+            mainContent.style.display = 'block';
+            markdownInput.addEventListener('input', debouncedUpdatePreview);
+            updatePreview();
+            parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
+        }
+        function showError() {
+            loadingContainer.style.display = 'none';
+            mainContent.style.display = 'none';
+            errorContainer.style.display = 'flex';
+        }
+        // Dynamically load marked.js from jsdelivr
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+        script.onload = showMainContent;
+        script.onerror = showError;
+        document.body.appendChild(script);
     </script>
 </body>
 </html>
