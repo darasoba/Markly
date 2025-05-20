@@ -13,7 +13,10 @@
   ],
   "ui": "ui.html",
   "networkAccess": {
-    "allowedDomains": ["https://cdn.jsdelivr.net"]
+    "allowedDomains": ["https://cdn.jsdelivr.net",
+    "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
+    "https://cdn.tailwindcss.com",
+    "https://fonts.googleapis.com"]
   },
   "menu": [
     {
@@ -25,7 +28,7 @@
       "command": "to-md"
     },
     {
-      "name": "Match Styles ↔ Markdown",
+      "name": "Match Styles to Markdown",
       "command": "match-styles"
     }
   ]

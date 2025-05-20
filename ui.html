@@ -86,7 +86,7 @@
         textarea,
         select {
             width: 100%;
-            padding: 0.75rem; 
+            padding: 1rem; 
             border: 1px solid var(--border-color);
             border-radius: 1rem; 
             background-color: var(--input-bg);
@@ -149,6 +149,12 @@
             background-color: var(--brand-color-hover);
         }
 
+        button.primary:disabled {
+            background-color: var(--gray-400);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
         button.secondary {
             background-color:var(--gray-200); /* Light theme default */
             color: var(--gray-900);  /* Light theme default */
@@ -199,9 +205,7 @@
         /* Style Mapping Section */
         #style-mapping-container {
             margin-top: 1rem;
-            padding: 1rem; 
-            padding-bottom: 0.5rem;
-            padding-top: 0.5rem;
+            padding: 1rem; /* 12px */
             background-color: var(--style-mapping-bg); 
             border-radius: 1rem; 
             margin-bottom: 1.5rem;
@@ -218,7 +222,7 @@
             margin-bottom: 1rem;
         }
         #style-mapping-options .mapping-item { 
-            margin-bottom: 0.25rem; 
+            margin-bottom: 1rem; 
         }
 
         /* Spinner */
@@ -301,30 +305,30 @@
     </div>
 
     <!-- Main Content (hidden initially) -->
-    <div id="main-content" class="hidden">
+    <div id="main-content" class="hidden pb-12">
         <h2 class="plugin-title">Convert Markdown to Layers</h2>
         
         <div class="mb-6"> 
             <label for="markdown-input">Enter Markdown:</label>
-            <textarea id="markdown-input" placeholder="# Heading 1&#10;## Heading 2&#10;This is a paragraph with **bold** and *italic* text.&#10;- List item 1&#10;- List item 2&#10;[Example Link](https://example.com)"></textarea>
+            <textarea id="markdown-input" class="p-3 text-[13px]" placeholder="# Heading 1&#10;## Heading 2&#10;This is a paragraph with **bold** and *italic* text.&#10;- List item 1&#10;- List item 2&#10;[Example Link](https://example.com)"></textarea>
         </div>
         
         <div class="mb-6"> 
             <label for="preview">Preview:</label>
-            <div id="preview"></div>
+            <div id="preview" class="p-4"></div>
         </div>
         
         <div id="style-mapping-container">
             <h3>Map to Figma Text Styles</h3>
             <p class="description">Select which local text styles should be applied to each Markdown element. If no style is selected, default text settings will be used.</p>
-            <div id="style-mapping-options" class="space-y-3">
+            <div id="style-mapping-options">
                 <!-- Mapping options will be populated here by JS -->
             </div>
         </div>
         
-        <div class="mt-8 flex space-x-3"> 
-            <button id="cancel-button" class="secondary flex-1">Cancel</button> 
-            <button id="convert-button" class="primary flex-1">Convert from Input</button> 
+        <div class="fixed bottom-0 left-0 right-0 bg-[var(--bg-color)] flex space-x-[12px] p-4 shadow-md z-10 border-t border-[var(--border-color)]">
+            <button id="cancel-button" class="secondary py-2 pl-8 px-8">Cancel</button>
+            <button id="convert-button" class="primary flex-1 py-2">Convert from Input</button>
         </div>
     </div>
 
@@ -332,8 +336,8 @@
     <div id="clipboard-ui" class="hidden">
         <h2 class="plugin-title mb-4">Copy Markdown to Clipboard</h2>
         <div id="clipboard-status">Please copy the text manually below.</div>
-        <textarea id="manual-copy-area" readonly></textarea>
-        <button id="manual-copy-button" class="primary w-full">Copy to Clipboard</button>
+        <textarea id="manual-copy-area" class="p-3 text-[12px]" readonly></textarea>
+        <button id="manual-copy-button" class="primary w-full py-2 mt-3">Copy to Clipboard</button>
     </div>
 
     <script>
@@ -350,6 +354,14 @@
         const clipboardStatus = document.getElementById('clipboard-status'); 
         const manualCopyArea = document.getElementById('manual-copy-area');
         const manualCopyButton = document.getElementById('manual-copy-button');
+        
+        // Set convert button to disabled by default
+        convertButton.disabled = true;
+
+        // Function to check if markdown input has content
+        function checkMarkdownInput() {
+            convertButton.disabled = !markdownInput.value.trim();
+        }
         
         // Initial state setup
         function showLoading() {
@@ -466,14 +478,17 @@
             }
             markdownElements.forEach(element => {
                 const container = document.createElement('div');
-                container.className = 'mapping-item grid grid-cols-2 gap-x-4 items-center'; 
+                container.className = 'mapping-item items-center'; 
 
                 const label = document.createElement('label');
                 label.htmlFor = `map-${element.key}`;
                 label.textContent = element.label;
+                label.classList.add('mb-2');
 
                 const select = document.createElement('select');
                 select.id = `map-${element.key}`;
+                select.classList.add('w-full');
+                select.classList.add('py-2', 'pl-4');
 
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
@@ -600,8 +615,11 @@
 
         function mainUISetup() {
             showMainUI(); 
-            markdownInput.addEventListener('input', debouncedUpdatePreview);
-            updatePreview(); 
+            markdownInput.addEventListener('input', function() {
+                debouncedUpdatePreview();
+                checkMarkdownInput();
+            });
+            updatePreview();
             parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*'); 
         }
         
