@@ -17,8 +17,16 @@
   },
   "menu": [
     {
-      "name": "Convert Markdown",
-      "command": "convert"
+      "name": "Convert from Markdown",
+      "command": "from-md"
+    },
+    {
+      "name": "Copy as Markdown",
+      "command": "to-md"
+    },
+    {
+      "name": "Match Styles ↔ Markdown",
+      "command": "match-styles"
     }
   ]
 }

@@ -133,21 +133,34 @@
         </div>
         <div class="mt-5 flex justify-end">
             <button id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm font-medium">Cancel</button>
-            <button id="convert-selected-button" class="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium">Convert Selected Text</button>
             <button id="convert-button" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Convert from Input</button>
         </div>
     </div>
+
+    <!-- Special UI for clipboard operations -->
+    <div id="clipboard-ui" style="display:none; padding: 1rem; text-align: center;">
+        <div id="clipboard-status" class="mb-3 text-gray-800 font-medium">Due to Figma's security restrictions, automatic clipboard access is not possible. Please copy the text manually.</div>
+        <textarea id="manual-copy-area" style="width: 100%; height: 120px; margin-bottom: 10px; display: block;" readonly></textarea>
+        <button id="manual-copy-button" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Copy to Clipboard</button>
+        <div id="copy-success" class="text-green-600 font-medium mt-2" style="display: none;">✓ Copied!</div>
+    </div>
+
     <script>
         // DOM Elements
         const markdownInput = document.getElementById('markdown-input');
         const preview = document.getElementById('preview');
         const convertButton = document.getElementById('convert-button');
-        const convertSelectedButton = document.getElementById('convert-selected-button');
         const cancelButton = document.getElementById('cancel-button');
         const styleMappingOptions = document.getElementById('style-mapping-options');
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
         const errorContainer = document.getElementById('error-container');
+        const clipboardUI = document.getElementById('clipboard-ui');
+        const clipboardStatus = document.getElementById('clipboard-status');
+        const manualCopyArea = document.getElementById('manual-copy-area');
+        const manualCopyButton = document.getElementById('manual-copy-button');
+        const copySuccess = document.getElementById('copy-success');
+        
         let availableStyles = [];
         const markdownElements = [
             { key: 'h1', label: 'Heading 1 (#)', selector: 'h1' },
@@ -160,6 +173,45 @@
             { key: 'a', label: 'Link [text](url)', selector: 'a' }
             // Add more mappings here if needed (e.g., blockquote, code, etc.)
         ];
+
+        // --- Clipboard Operations for Headless Commands ---
+        async function handleClipboardAccess() {
+            // Try to get permissions for clipboard if needed
+            try {
+                const permissions = await navigator.permissions.query({ name: 'clipboard-read' });
+                return permissions.state === 'granted' || permissions.state === 'prompt';
+            } catch (e) {
+                // If permissions API is not available, we'll try anyway
+                console.warn("Clipboard permissions API not available:", e);
+                return true;
+            }
+        }
+
+        async function getClipboardText() {
+            try {
+                if (await handleClipboardAccess()) {
+                    const text = await navigator.clipboard.readText();
+                    console.log("Read from clipboard, length:", text.length);
+                    return text;
+                }
+                throw new Error("Clipboard permission denied");
+            } catch (e) {
+                console.error("Error reading clipboard:", e);
+                throw new Error(`Clipboard read error: ${e.message || 'Permission denied'}`);
+            }
+        }
+
+        async function setClipboardText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                console.log("Text copied to clipboard, length:", text.length);
+                return true;
+            } catch (e) {
+                console.error("Error writing to clipboard:", e);
+                throw new Error(`Clipboard write error: ${e.message || 'Permission denied'}`);
+            }
+        }
+
         // Real-time Preview
         function updatePreview() {
             if (typeof marked === 'undefined') {
@@ -222,9 +274,10 @@
             });
         }
         // Communication with Plugin Code
-        window.onmessage = (event) => {
+        window.onmessage = async (event) => {
             if (event.data.pluginMessage) {
                 const { type, data } = event.data.pluginMessage;
+                
                 if (type === 'stylesLoaded') {
                     populateStyleMappings(data);
                 } else if (type === 'conversionError') {
@@ -235,9 +288,41 @@
                     console.error('Selection Error from Figma:', data.message);
                 } else if (type === 'stylesError') {
                     styleMappingOptions.innerHTML = `<p class="text-xs text-red-600">Error loading styles: ${data.message}</p>`;
+                } else if (type === 'getClipboardContent') {
+                    // Handle clipboard read request for headless mode
+                    try {
+                        const clipboardText = await getClipboardText();
+                        parent.postMessage({ 
+                            pluginMessage: { 
+                                type: 'clipboardContent', 
+                                data: clipboardText 
+                            } 
+                        }, '*');
+                    } catch (error) {
+                        parent.postMessage({ 
+                            pluginMessage: { 
+                                type: 'clipboardError', 
+                                error: error.message || 'Could not read clipboard' 
+                            } 
+                        }, '*');
+                    }
+                } else if (type === 'showMarkdownForManualCopy') {
+                    // Hide loading, show clipboard UI with manual copy option
+                    loadingContainer.style.display = 'none';
+                    mainContent.style.display = 'none';
+                    errorContainer.style.display = 'none';
+                    clipboardUI.style.display = 'block';
+                    
+                    manualCopyArea.value = data;
+                    // Focus the textarea to make it easier for users to press Ctrl+A/Cmd+A
+                    setTimeout(() => {
+                        manualCopyArea.focus();
+                        manualCopyArea.select();
+                    }, 100);
                 }
             }
         };
+
         // Button Actions
         convertButton.onclick = () => {
             try {
@@ -254,23 +339,22 @@
                 alert("An unexpected error occurred in the UI. Check the console.");
             }
         };
-        convertSelectedButton.onclick = () => {
-            try {
-                const mappings = {};
-                markdownElements.forEach(element => {
-                    const select = document.getElementById(`map-${element.key}`);
-                    if (select && select.value) {
-                        mappings[element.key] = select.value;
-                    }
-                });
-                parent.postMessage({ pluginMessage: { type: 'convertSelectedMarkdown', data: { mappings } } }, '*');
-            } catch (e) {
-                alert("An unexpected error occurred in the UI when trying to convert selected text. Check the console.");
-                console.error("UI error for convertSelectedMarkdown:", e);
-            }
-        };
         cancelButton.onclick = () => {
             parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+        };
+        // Manual copy button handler
+        manualCopyButton.onclick = () => {
+            manualCopyArea.select();
+            try {
+                document.execCommand('copy');
+                copySuccess.style.display = 'block';
+                setTimeout(() => {
+                    parent.postMessage({ pluginMessage: { type: 'clipboardSet' } }, '*');
+                }, 1000);
+            } catch (e) {
+                console.error("Manual copy failed:", e);
+                clipboardStatus.textContent = "Couldn't copy. Please press Ctrl+C/Cmd+C to copy the text manually.";
+            }
         };
         // Dynamic Script Loading for marked.js
         function showMainContent() {
@@ -292,6 +376,16 @@
         script.onload = showMainContent;
         script.onerror = showError;
         document.body.appendChild(script);
+
+        // For headless operations, detect if we're in headless mode
+        if (window.innerWidth <= 10 && window.innerHeight <= 10) {
+            // This is likely a headless call
+            console.log("Running in headless mode. Waiting for plugin commands...");
+            loadingContainer.style.display = 'none';
+            mainContent.style.display = 'none';
+            errorContainer.style.display = 'none';
+            document.body.style.background = 'transparent';
+        }
     </script>
 </body>
 </html>
