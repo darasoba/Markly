@@ -5,86 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown to Layers</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --brand-color: #007AFF;
+            --brand-color-hover: #005ECC;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --red-500: #ef4444;
+            --red-600: #dc2626;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            padding: 1rem;
-            background-color: #f8fafc;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            padding: 1.5rem; /* Increased padding */
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-        #preview {
-            border: 1px solid #e5e7eb;
-            padding: 0.75rem;
-            min-height: 100px;
-            background-color: white;
-            border-radius: 0.375rem;
-            overflow-y: auto;
-            max-height: 200px;
+
+        /* General UI elements */
+        h2.plugin-title {
+            font-size: 1.25rem; /* 20px */
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
         }
-        #preview h1 { font-size: 1.875rem; font-weight: bold; margin-bottom: 0.5rem; }
-        #preview h2 { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; }
-        #preview h3 { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
-        #preview p { margin-bottom: 0.75rem; line-height: 1.6; }
-        #preview ul, #preview ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
-        #preview li { margin-bottom: 0.25rem; }
-        #preview a { color: #2563eb; text-decoration: underline; }
+
         label {
             display: block;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem; /* Increased margin */
             font-weight: 500;
-            color: #374151;
+            color: var(--gray-700);
+            font-size: 0.875rem; /* 14px */
         }
+
+        textarea,
         select {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
+            padding: 0.75rem; /* Increased padding */
+            border: 1px solid var(--gray-300);
+            border-radius: 1rem; /* 16px */
             background-color: white;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem; /* Consistent margin */
+            font-size: 0.8rem;
+            color: var(--gray-800);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
-        textarea {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
+
+        /* Custom styling for select elements to fix chevron padding */
+        select {
+            appearance: none; /* Remove browser default styling */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center; /* Match left padding */
+            padding-right: 2.5rem; /* Ensure text doesn't overlap with the chevron */
+        }
+
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25); /* Focus ring with brand color */
+        }
+        
+        textarea#markdown-input {
             min-height: 150px;
-            margin-bottom: 1rem;
+            resize: vertical;
         }
+
         button {
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.375rem;
-            font-weight: 600;
+            padding: 0.625rem 1.25rem; /* Tailwind 'px-5 py-2.5' */
+            border-radius: 32px; /* 6px */
+            font-weight: 500; /* Slightly less bold */
+            font-size: 0.875rem; /* 14px */
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        #convert-button {
-            background-color: #2563eb;
+
+        button.primary {
+            background-color: var(--brand-color);
             color: white;
+            border: none;
         }
-        #convert-button:hover {
-            background-color: #1d4ed8;
+        button.primary:hover {
+            background-color: var(--brand-color-hover);
         }
-        #cancel-button {
-            background-color: #e5e7eb;
-            color: #374151;
-            margin-left: 0.5rem;
+
+        button.secondary {
+            background-color:var(--gray-200);
+            color: var(--gray-900);
+            border: 1px solid var(--gray-300);
         }
-        #cancel-button:hover {
-            background-color: #d1d5db;
+        button.secondary:hover {
+            background-color: var(--gray-300);
+            color: var(--gray-900);
         }
-        .mapping-section {
+
+        /* Preview Area */
+        #preview {
+            border: 1px solid var(--gray-300);
+            padding: 1rem; /* Increased padding */
+            min-height: 120px; /* Adjusted height */
+            background-color: white;
+            border-radius: 16px;
+            overflow-y: auto;
+            max-height: 250px; /* Adjusted height */
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        #preview h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--gray-900); }
+        #preview h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.625rem; color: var(--gray-800); }
+        #preview h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-700); }
+        #preview p { margin-bottom: 0.75rem; color: var(--gray-700); }
+        #preview ul, #preview ol { margin-left: 1.25rem; margin-bottom: 0.75rem; color: var(--gray-700); }
+        #preview li { margin-bottom: 0.375rem; }
+        #preview a { color: var(--brand-color); text-decoration: none; }
+        #preview a:hover { text-decoration: underline; }
+        #preview code { background-color: var(--gray-100); padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.8em;}
+        #preview pre { background-color: var(--gray-100); padding: 0.75rem; border-radius: 0.375rem; overflow-x: auto; margin-bottom: 0.75rem;}
+
+
+        /* Style Mapping Section */
+        #style-mapping-container {
+            margin-top: 1rem;
+            padding: 1rem; /* Consistent padding */
+            padding-bottom: 0.5rem;
+            padding-top: 0.5rem;
+            background-color: var(--gray-100); /* Lighter background */
+            border-radius: 1rem; /* Slightly larger radius */
+            margin-bottom: 1.5rem;
+        }
+        #style-mapping-container h3 {
+            font-size: 1.25rem; /* 16px */
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-800);
+        }
+        #style-mapping-container p.description {
+            font-size: 0.875rem; /* 14px */
+            color: var(--gray-600);
             margin-bottom: 1rem;
-            padding: 0.75rem;
-            background-color: #eef2ff;
-            border-radius: 0.375rem;
         }
+        #style-mapping-options .mapping-item { /* For dynamically created items if needed */
+            margin-bottom: 0.25rem; /* Reduced from 0.75rem to 0.25rem */
+        }
+
         /* Spinner */
         #loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid var(--gray-200); /* Lighter base color */
+            border-top: 4px solid var(--brand-color); /* Brand color for spinner */
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 36px; /* Slightly smaller */
+            height: 36px;
+            animation: spin 0.8s linear infinite;
             margin: 0 auto;
         }
         @keyframes spin {
@@ -96,53 +184,105 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent overlay */
+            z-index: 999;
         }
         #error-container {
-            color: #dc2626;
-            font-weight: bold;
+            color: var(--red-600);
         }
+        #loading-container .message, #error-container .message {
+             margin-top: 1rem;
+             font-size: 0.875rem;
+             color: var(--gray-700);
+             font-weight: 500;
+        }
+         #error-container .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+
+        /* Clipboard UI */
+        /* #clipboard-ui {
+            padding: 1.5rem;
+            text-align: center;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); /* Subtle shadow 
+        } */
+         
+        #clipboard-status {
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            font-weight: 500;
+        }
+        #manual-copy-area {
+            width: 100%;
+            height: 120px;
+            margin-bottom: 1rem;
+            font-family: monospace; /* Monospace for code-like text */
+            font-size: 0.875rem;
+        }
+        
+        /* Utility to hide elements */
+        .hidden {
+            display: none !important;
+        }
+
     </style>
 </head>
 <body>
     <!-- Spinner and loading message -->
-    <div id="loading-container">
+    <div id="loading-container" class="hidden">
         <div id="loading-spinner"></div>
-        <div class="mt-4 text-gray-700 font-medium text-center">Connecting to plugin service...</div>
+        <div class="message">Connecting to plugin service...</div>
     </div>
     <!-- Error message -->
-    <div id="error-container" style="display:none;">
-        <div class="text-2xl mb-2">⚠️</div>
-        <div>Plugin service is currently unavailable.<br>Please check your internet connection or try again later.</div>
+    <div id="error-container" class="hidden">
+        <div class="icon">⚠️</div>
+        <div class="message">Plugin service is currently unavailable.<br>Please check your internet connection or try again later.</div>
     </div>
+
     <!-- Main Content (hidden initially) -->
-    <div id="main-content" style="display:none;">
-        <h2 class="text-lg font-semibold mb-3 text-gray-800">Convert Markdown to Layers</h2>
-        <div>
-            <label for="markdown-input" class="text-sm font-medium text-gray-700">Enter Markdown:</label>
-            <textarea id="markdown-input" placeholder="# Heading 1&#10;## Heading 2&#10;This is a paragraph with **bold** and *italic* text.&#10;- List item 1&#10;- List item 2&#10;[Example Link](https://example.com)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+    <div id="main-content" class="hidden">
+        <h2 class="plugin-title">Convert Markdown to Layers</h2>
+        
+        <div class="mb-6"> <!-- Added margin bottom -->
+            <label for="markdown-input">Enter Markdown:</label>
+            <textarea id="markdown-input" placeholder="# Heading 1&#10;## Heading 2&#10;This is a paragraph with **bold** and *italic* text.&#10;- List item 1&#10;- List item 2&#10;[Example Link](https://example.com)"></textarea>
         </div>
-        <div>
-            <label class="text-sm font-medium text-gray-700">Preview:</label>
-            <div id="preview" class="mt-1 p-3 border border-gray-200 rounded-md bg-white min-h-[100px] max-h-[200px] overflow-y-auto text-sm"></div>
+        
+        <div class="mb-6"> <!-- Added margin bottom -->
+            <label for="preview">Preview:</label>
+            <div id="preview"></div>
         </div>
-        <div id="style-mapping-container" class="mt-4 space-y-3 mapping-section">
-            <h3 class="text-md font-semibold mb-2 text-gray-700">Map to Figma Text Styles</h3>
-            <p class="text-xs text-gray-500 mb-3">Select which local text styles should be applied to each Markdown element. If no style is selected, default text settings will be used.</p>
-            <div id="style-mapping-options"></div>
+        
+        <div id="style-mapping-container">
+            <h3>Map to Figma Text Styles</h3>
+            <p class="description">Select which local text styles should be applied to each Markdown element. If no style is selected, default text settings will be used.</p>
+            <div id="style-mapping-options" class="space-y-3">
+                <!-- Mapping options will be populated here by JS -->
+            </div>
         </div>
-        <div class="mt-5 flex justify-end">
-            <button id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm font-medium">Cancel</button>
-            <button id="convert-button" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Convert from Input</button>
+        
+        <div class="mt-8 flex space-x-3"> <!-- Removed justify-between -->
+            <button id="cancel-button" class="secondary flex-1">Cancel</button> <!-- Changed w-full to flex-1 -->
+            <button id="convert-button" class="primary flex-1">Convert from Input</button> <!-- Changed w-full to flex-1 -->
         </div>
     </div>
 
     <!-- Special UI for clipboard operations -->
-    <div id="clipboard-ui" style="display:none; padding: 1rem; text-align: center;">
-        <div id="clipboard-status" class="mb-3 text-gray-800 font-medium">Due to Figma's security restrictions, automatic clipboard access is not possible. Please copy the text manually.</div>
-        <textarea id="manual-copy-area" style="width: 100%; height: 120px; margin-bottom: 10px; display: block;" readonly></textarea>
-        <button id="manual-copy-button" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Copy to Clipboard</button>
-        <div id="copy-success" class="text-green-600 font-medium mt-2" style="display: none;">✓ Copied!</div>
+    <div id="clipboard-ui" class="hidden">
+        <h2 class="plugin-title mb-4">Copy Markdown to Clipboard</h2>
+        <div id="clipboard-status">Please copy the text manually below.</div>
+        <textarea id="manual-copy-area" readonly></textarea>
+        <button id="manual-copy-button" class="primary w-full">Copy to Clipboard</button>
     </div>
 
     <script>
@@ -156,11 +296,47 @@
         const mainContent = document.getElementById('main-content');
         const errorContainer = document.getElementById('error-container');
         const clipboardUI = document.getElementById('clipboard-ui');
-        const clipboardStatus = document.getElementById('clipboard-status');
+        const clipboardStatus = document.getElementById('clipboard-status'); // Re-get if needed, but style is CSS now
         const manualCopyArea = document.getElementById('manual-copy-area');
         const manualCopyButton = document.getElementById('manual-copy-button');
-        const copySuccess = document.getElementById('copy-success');
         
+        // Initial state setup
+        function showLoading() {
+            if (loadingContainer) loadingContainer.classList.remove('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
+            if (errorContainer) errorContainer.classList.add('hidden');
+            if (clipboardUI) clipboardUI.classList.add('hidden');
+        }
+
+        function showErrorUI(message = "Plugin service is currently unavailable.<br>Please check your internet connection or try again later.") {
+            if (loadingContainer) loadingContainer.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
+            if (errorContainer) {
+                errorContainer.classList.remove('hidden');
+                const messageDiv = errorContainer.querySelector('.message');
+                if (messageDiv) {
+                    messageDiv.innerHTML = message;
+                } else {
+                    console.error("Error container's message div not found!");
+                }
+            }
+            if (clipboardUI) clipboardUI.classList.add('hidden');
+        }
+
+        function showMainUI() {
+            if (loadingContainer) loadingContainer.classList.add('hidden');
+            if (mainContent) mainContent.classList.remove('hidden');
+            if (errorContainer) errorContainer.classList.add('hidden');
+            if (clipboardUI) clipboardUI.classList.add('hidden');
+        }
+        
+        function showClipboardUI() {
+            if (loadingContainer) loadingContainer.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
+            if (errorContainer) errorContainer.classList.add('hidden');
+            if (clipboardUI) clipboardUI.classList.remove('hidden');
+        }
+
         let availableStyles = [];
         const markdownElements = [
             { key: 'h1', label: 'Heading 1 (#)', selector: 'h1' },
@@ -168,66 +344,63 @@
             { key: 'h3', label: 'Heading 3 (###)', selector: 'h3' },
             { key: 'p', label: 'Paragraph', selector: 'p' },
             { key: 'li', label: 'List Item (-, *)', selector: 'li' },
-            { key: 'strong', label: 'Bold (**text**)', selector: 'strong' },
-            { key: 'em', label: 'Italic (*text*)', selector: 'em' },
-            { key: 'a', label: 'Link [text](url)', selector: 'a' }
-            // Add more mappings here if needed (e.g., blockquote, code, etc.)
+            { key: 'a', label: 'Link', selector: 'a' },
+            // Note: strong, em, a are typically handled inline by marked.js and might not need direct style mapping
+            // unless you intend to override their default browser/Figma rendering with a specific Figma style.
+            // For now, focusing on block elements for clarity in the mapping UI.
         ];
 
-        // --- Clipboard Operations for Headless Commands ---
+        // --- Clipboard Operations --- (getClipboardText, setClipboardText can remain if used by other commands)
         async function handleClipboardAccess() {
-            // Try to get permissions for clipboard if needed
             try {
-                const permissions = await navigator.permissions.query({ name: 'clipboard-read' });
-                return permissions.state === 'granted' || permissions.state === 'prompt';
+                // Modern browsers might not need this specific query for writeText, but readText often does.
+                const readPerm = await navigator.permissions.query({ name: 'clipboard-read' });
+                // const writePerm = await navigator.permissions.query({ name: 'clipboard-write' }); // May throw on some browsers
+                if ((readPerm.state === 'granted' || readPerm.state === 'prompt')) { // && (writePerm.state === 'granted' || writePerm.state === 'prompt')) {
+                    return true;
+                }
+                return false;
             } catch (e) {
-                // If permissions API is not available, we'll try anyway
-                console.warn("Clipboard permissions API not available:", e);
-                return true;
+                console.warn("Clipboard permissions API not fully available or errored:", e);
+                return true; // Fallback to try anyway
             }
         }
 
-        async function getClipboardText() {
+        async function getClipboardText() { // If used by 'from-md' or other features
             try {
+                if (!(navigator.clipboard && navigator.clipboard.readText)) {
+                     throw new Error("Browser does not support clipboard read API.");
+                }
                 if (await handleClipboardAccess()) {
                     const text = await navigator.clipboard.readText();
                     console.log("Read from clipboard, length:", text.length);
                     return text;
                 }
-                throw new Error("Clipboard permission denied");
+                throw new Error("Clipboard permission denied for reading.");
             } catch (e) {
                 console.error("Error reading clipboard:", e);
-                throw new Error(`Clipboard read error: ${e.message || 'Permission denied'}`);
+                showErrorUI(`Clipboard read error: ${e.message || 'Permission denied or API not supported.'}`);
+                throw e; // Re-throw for caller
             }
         }
-
-        async function setClipboardText(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-                console.log("Text copied to clipboard, length:", text.length);
-                return true;
-            } catch (e) {
-                console.error("Error writing to clipboard:", e);
-                throw new Error(`Clipboard write error: ${e.message || 'Permission denied'}`);
-            }
-        }
-
+        
         // Real-time Preview
         function updatePreview() {
             if (typeof marked === 'undefined') {
-                preview.innerHTML = '<p style="color: red;">Error: Preview library (marked.js) not loaded. Check network access and CDN link.</p>';
+                preview.innerHTML = '<p style="color: var(--red-500);">Error: Preview library (marked.js) not loaded.</p>';
                 return;
             }
             try {
                 const markdownText = markdownInput.value;
+                // Configure marked to add classes for styling if needed, or rely on #preview scoped styles
                 const sanitizedHtml = marked.parse(markdownText);
                 preview.innerHTML = sanitizedHtml;
             } catch (e) {
                 console.error("Error updating preview:", e);
-                preview.innerHTML = '<p style="color: red;">Error rendering preview.</p>';
+                preview.innerHTML = '<p style="color: var(--red-500);">Error rendering preview.</p>';
             }
         }
-        // Debounce
+        
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -239,86 +412,88 @@
                 timeout = setTimeout(later, wait);
             };
         }
-        const debouncedUpdatePreview = debounce(updatePreview, 300);
+        const debouncedUpdatePreview = debounce(updatePreview, 250); // Faster debounce
+        
         // Style Mapping UI
         function populateStyleMappings(styles) {
             availableStyles = styles;
-            styleMappingOptions.innerHTML = '';
+            styleMappingOptions.innerHTML = ''; // Clear previous options
             if (!styles || styles.length === 0) {
-                styleMappingOptions.innerHTML = '<p class="text-xs text-gray-500">No local text styles found.</p>';
+                styleMappingOptions.innerHTML = '<p class="text-sm text-gray-500">No local text styles found in this document.</p>';
                 return;
             }
             markdownElements.forEach(element => {
                 const container = document.createElement('div');
-                container.className = 'mb-2';
+                container.className = 'mapping-item grid grid-cols-2 gap-x-4 items-center'; // Use grid for alignment
+
                 const label = document.createElement('label');
                 label.htmlFor = `map-${element.key}`;
                 label.textContent = element.label;
-                label.className = 'block text-sm font-medium text-gray-600 mb-1';
+                // Tailwind classes for label are in <style> or applied directly if needed
+
                 const select = document.createElement('select');
                 select.id = `map-${element.key}`;
-                select.className = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm';
+                // Tailwind classes for select are in <style>
+
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = 'Default (No Style)';
                 select.appendChild(defaultOption);
+
                 styles.forEach(style => {
                     const option = document.createElement('option');
                     option.value = style.id;
                     option.textContent = style.name;
                     select.appendChild(option);
                 });
+                
                 container.appendChild(label);
                 container.appendChild(select);
                 styleMappingOptions.appendChild(container);
             });
         }
+        
         // Communication with Plugin Code
         window.onmessage = async (event) => {
             if (event.data.pluginMessage) {
-                const { type, data } = event.data.pluginMessage;
-                
-                if (type === 'stylesLoaded') {
-                    populateStyleMappings(data);
-                } else if (type === 'conversionError') {
-                    alert(`Error during conversion: ${data.message}`);
-                    console.error('Conversion Error from Figma:', data.message);
-                } else if (type === 'selectionError') {
-                    alert(`Selection error: ${data.message}`);
-                    console.error('Selection Error from Figma:', data.message);
-                } else if (type === 'stylesError') {
-                    styleMappingOptions.innerHTML = `<p class="text-xs text-red-600">Error loading styles: ${data.message}</p>`;
-                } else if (type === 'getClipboardContent') {
-                    // Handle clipboard read request for headless mode
-                    try {
-                        const clipboardText = await getClipboardText();
-                        parent.postMessage({ 
-                            pluginMessage: { 
-                                type: 'clipboardContent', 
-                                data: clipboardText 
-                            } 
-                        }, '*');
-                    } catch (error) {
-                        parent.postMessage({ 
-                            pluginMessage: { 
-                                type: 'clipboardError', 
-                                error: error.message || 'Could not read clipboard' 
-                            } 
-                        }, '*');
-                    }
-                } else if (type === 'showMarkdownForManualCopy') {
-                    // Hide loading, show clipboard UI with manual copy option
-                    loadingContainer.style.display = 'none';
-                    mainContent.style.display = 'none';
-                    errorContainer.style.display = 'none';
-                    clipboardUI.style.display = 'block';
-                    
-                    manualCopyArea.value = data;
-                    // Focus the textarea to make it easier for users to press Ctrl+A/Cmd+A
-                    setTimeout(() => {
-                        manualCopyArea.focus();
-                        manualCopyArea.select();
-                    }, 100);
+                const { type, data, error } = event.data.pluginMessage;
+                console.log("Message from Figma:", type, data, error);
+
+                switch (type) {
+                    case 'stylesLoaded':
+                        populateStyleMappings(data);
+                        break;
+                    case 'conversionError':
+                        // Using alert for now, could integrate into a modal or inline message
+                        alert(`Error during conversion: ${data.message}`); 
+                        console.error('Conversion Error from Figma:', data.message);
+                        break;
+                    case 'selectionError':
+                        alert(`Selection error: ${data.message}`);
+                        console.error('Selection Error from Figma:', data.message);
+                        break;
+                    case 'stylesError':
+                        styleMappingOptions.innerHTML = `<p class="text-sm text-red-500">Error loading styles: ${data.message}</p>`;
+                        break;
+                    case 'getClipboardContent': // For "from-md" command
+                        try {
+                            const clipboardText = await getClipboardText(); // Ensure this shows UI errors
+                            parent.postMessage({ pluginMessage: { type: 'clipboardContent', data: clipboardText } }, '*');
+                        } catch (e) {
+                            // Error already handled by getClipboardText via showErrorUI
+                            parent.postMessage({ pluginMessage: { type: 'clipboardError', error: e.message || 'Could not read clipboard' } }, '*');
+                        }
+                        break;
+                    case 'showMarkdownForManualCopy': // For "to-md" command
+                        showClipboardUI();
+                        manualCopyArea.value = data;
+                        setTimeout(() => { // Ensure UI is visible before focus/select
+                            manualCopyArea.focus();
+                            manualCopyArea.select();
+                        }, 50); // Small delay
+                        break;
+                    default:
+                        console.log("Received unknown message type from Figma:", type);
                 }
             }
         };
@@ -327,6 +502,10 @@
         convertButton.onclick = () => {
             try {
                 const markdown = markdownInput.value;
+                if (!markdown.trim()) {
+                    alert("Markdown input is empty. Please enter some Markdown to convert.");
+                    return;
+                }
                 const mappings = {};
                 markdownElements.forEach(element => {
                     const select = document.getElementById(`map-${element.key}`);
@@ -336,56 +515,103 @@
                 });
                 parent.postMessage({ pluginMessage: { type: 'convertMarkdown', data: { markdown, mappings } } }, '*');
             } catch (e) {
+                console.error("UI error on convert:", e);
                 alert("An unexpected error occurred in the UI. Check the console.");
             }
         };
+
         cancelButton.onclick = () => {
             parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
         };
-        // Manual copy button handler
+
         manualCopyButton.onclick = () => {
             manualCopyArea.select();
+            manualCopyArea.setSelectionRange(0, manualCopyArea.value.length); // For good measure
             try {
-                document.execCommand('copy');
-                copySuccess.style.display = 'block';
-                setTimeout(() => {
-                    parent.postMessage({ pluginMessage: { type: 'clipboardSet' } }, '*');
-                }, 1000);
+                // Modern async clipboard API is preferred but might not work in all sandboxed environments
+                // For manual copy, execCommand is a common fallback.
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    manualCopyButton.textContent = 'Copied!';
+                    manualCopyButton.disabled = true;
+                    setTimeout(() => {
+                        parent.postMessage({ pluginMessage: { type: 'clipboardSet' } }, '*'); // Notify Figma UI closed
+                        // Optionally close plugin or reset button state
+                        // manualCopyButton.textContent = 'Copy to Clipboard';
+                        // manualCopyButton.disabled = false;
+                    }, 1500);
+                } else {
+                     throw new Error("document.execCommand('copy') returned false.");
+                }
             } catch (e) {
                 console.error("Manual copy failed:", e);
-                clipboardStatus.textContent = "Couldn't copy. Please press Ctrl+C/Cmd+C to copy the text manually.";
+                clipboardStatus.textContent = "Copy failed. Please press Ctrl+C or Cmd+C.";
+                // Provide alternative instructions if execCommand fails
             }
         };
-        // Dynamic Script Loading for marked.js
-        function showMainContent() {
-            loadingContainer.style.display = 'none';
-            errorContainer.style.display = 'none';
-            mainContent.style.display = 'block';
-            markdownInput.addEventListener('input', debouncedUpdatePreview);
-            updatePreview();
-            parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
+        
+        // Initialize
+        function initializePluginUI() {
+            // Check if marked.js is needed for the main UI (it is, for preview)
+            if (typeof marked === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+                script.onload = () => {
+                    console.log("marked.js loaded dynamically.");
+                    mainUISetup();
+                };
+                script.onerror = () => {
+                    console.error("Failed to load marked.js from CDN.");
+                    showErrorUI("Could not load preview library. Please check your internet connection.");
+                };
+                document.body.appendChild(script);
+            } else {
+                mainUISetup();
+            }
         }
-        function showError() {
-            loadingContainer.style.display = 'none';
-            mainContent.style.display = 'none';
-            errorContainer.style.display = 'flex';
-        }
-        // Dynamically load marked.js from jsdelivr
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-        script.onload = showMainContent;
-        script.onerror = showError;
-        document.body.appendChild(script);
 
-        // For headless operations, detect if we're in headless mode
-        if (window.innerWidth <= 10 && window.innerHeight <= 10) {
-            // This is likely a headless call
-            console.log("Running in headless mode. Waiting for plugin commands...");
-            loadingContainer.style.display = 'none';
-            mainContent.style.display = 'none';
-            errorContainer.style.display = 'none';
-            document.body.style.background = 'transparent';
+        function mainUISetup() {
+            showMainUI(); // Show main content after lib is ready
+            markdownInput.addEventListener('input', debouncedUpdatePreview);
+            updatePreview(); // Initial preview render
+            parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*'); // Request styles
         }
+
+
+        // --- Initial Setup ---
+        // Determine if this UI instance is for a headless command or full UI
+        // The `code.js` part will show the UI with specific parameters or messages
+        // This client-side script just needs to react to `window.onmessage`
+        // However, we can show a loading state until Figma tells us what to do.
+        
+        // A simple check: if no specific message to show clipboard UI comes quickly, assume main UI.
+        // This logic can be refined based on how `code.js` calls `figma.showUI`.
+        // For now, `code.js` will send `showMarkdownForManualCopy` for that specific case.
+        // Otherwise, we assume the main UI flow.
+        
+        // Default to loading, then initialize the main UI if no other command (like showMarkdownForManualCopy) takes over.
+        // The `onmessage` handler will switch views if needed.
+        
+        // If the plugin is launched for "Copy as Markdown", code.js now sends 'showMarkdownForManualCopy'
+        // If launched for "Match Styles", code.js shows UI and sends 'getStyles'
+        // If launched for "Convert from Markdown" (headless), UI might not be shown or only briefly for clipboard.
+        
+        // The initial display: none on body elements will be handled by JS functions like showMainUI etc.
+        // Start with loading as a default. If Figma sends a command to show clipboard UI, that will override.
+        // Otherwise, assume it's the main UI.
+        
+        if (window.innerWidth > 10 && window.innerHeight > 10) { // Basic check to avoid running full UI init for truly headless operations
+            showLoading(); // Show loading initially
+            initializePluginUI(); // Start loading marked.js and then show main UI or error
+        } else {
+             // This is likely a headless call (e.g. from-md, or an old clipboard attempt style)
+             // The new "to-md" flow explicitly shows the clipboard UI via a message,
+             // so this specific `else` block might only catch very small, non-interactive UI states.
+             console.log("Running in potentially headless mode or very small UI. Waiting for plugin commands...");
+             document.body.style.background = 'transparent'; // For truly headless, make bg transparent
+             loadingContainer.classList.add('hidden'); // Hide spinner for these cases too unless Figma commands it
+        }
+
     </script>
 </body>
 </html>
