@@ -1,5 +1,5 @@
 {
-  "name": "Paste from Markdown",
+  "name": "Markly - Paste/Copy from Markdown",
   "id": "1491236431880377267",
   "api": "1.0.0",
   "main": "code.js",
@@ -28,7 +28,7 @@
       "command": "to-md"
     },
     {
-      "name": "Match Styles to Markdown",
+      "name": "Paste to Match Styles",
       "command": "match-styles"
     }
   ]
