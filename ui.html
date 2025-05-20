@@ -133,7 +133,8 @@
         </div>
         <div class="mt-5 flex justify-end">
             <button id="cancel-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm font-medium">Cancel</button>
-            <button id="convert-button" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Convert</button>
+            <button id="convert-selected-button" class="ml-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium">Convert Selected Text</button>
+            <button id="convert-button" class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Convert from Input</button>
         </div>
     </div>
     <script>
@@ -141,6 +142,7 @@
         const markdownInput = document.getElementById('markdown-input');
         const preview = document.getElementById('preview');
         const convertButton = document.getElementById('convert-button');
+        const convertSelectedButton = document.getElementById('convert-selected-button');
         const cancelButton = document.getElementById('cancel-button');
         const styleMappingOptions = document.getElementById('style-mapping-options');
         const loadingContainer = document.getElementById('loading-container');
@@ -228,6 +230,9 @@
                 } else if (type === 'conversionError') {
                     alert(`Error during conversion: ${data.message}`);
                     console.error('Conversion Error from Figma:', data.message);
+                } else if (type === 'selectionError') {
+                    alert(`Selection error: ${data.message}`);
+                    console.error('Selection Error from Figma:', data.message);
                 } else if (type === 'stylesError') {
                     styleMappingOptions.innerHTML = `<p class="text-xs text-red-600">Error loading styles: ${data.message}</p>`;
                 }
@@ -247,6 +252,21 @@
                 parent.postMessage({ pluginMessage: { type: 'convertMarkdown', data: { markdown, mappings } } }, '*');
             } catch (e) {
                 alert("An unexpected error occurred in the UI. Check the console.");
+            }
+        };
+        convertSelectedButton.onclick = () => {
+            try {
+                const mappings = {};
+                markdownElements.forEach(element => {
+                    const select = document.getElementById(`map-${element.key}`);
+                    if (select && select.value) {
+                        mappings[element.key] = select.value;
+                    }
+                });
+                parent.postMessage({ pluginMessage: { type: 'convertSelectedMarkdown', data: { mappings } } }, '*');
+            } catch (e) {
+                alert("An unexpected error occurred in the UI when trying to convert selected text. Check the console.");
+                console.error("UI error for convertSelectedMarkdown:", e);
             }
         };
         cancelButton.onclick = () => {
